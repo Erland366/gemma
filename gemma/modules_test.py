@@ -160,8 +160,8 @@ class AttentionTest(absltest.TestCase):
       num_heads: int,
       head_dim: int,
       features: int,
-      query_pre_attn_scalar: float | None = None,
-      num_kv_heads: int | None = None,
+      query_pre_attn_scalar: float = None,
+      num_kv_heads: int = None,
   ) -> tuple[jnp.ndarray, jnp.ndarray]:
     segment_pos = 0
     cache_size = 3

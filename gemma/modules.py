@@ -93,8 +93,8 @@ class Attention(nn.Module):
   head_dim: int
   attn_type: AttentionType
   query_pre_attn_scalar: float
-  attn_logits_soft_cap: float | None = None
-  sliding_window_size: int | None = None
+  attn_logits_soft_cap: float = None
+  sliding_window_size: int = None
 
   @property
   def use_qkv_einsum(self):
@@ -125,9 +125,9 @@ class Attention(nn.Module):
       self,
       x: jax.Array,
       segment_pos: jax.Array,
-      cache: LayerCache | None,
+      cache: LayerCache,
       attn_mask: jax.Array,
-  ) -> tuple[LayerCache | None, jax.Array]:
+  ) -> tuple[LayerCache, jax.Array]:
     seq_len = x.shape[1]
 
     if self.use_qkv_einsum:
@@ -291,8 +291,8 @@ class Block(nn.Module):
   attn_type: AttentionType
   query_pre_attn_scalar: float
   transpose_gating_einsum: bool
-  attn_logits_soft_cap: float | None = None
-  sliding_window_size: int | None = None
+  attn_logits_soft_cap: float = None
+  sliding_window_size: int = None
 
   def setup(self):
     self.pre_attention_norm = layers.RMSNorm()
@@ -324,9 +324,9 @@ class Block(nn.Module):
       self,
       x: jax.Array,
       segment_pos: jax.Array,
-      cache: LayerCache | None,
+      cache: LayerCache,
       attn_mask: jax.Array,
-  ) -> tuple[LayerCache | None, jax.Array]:
+  ) -> tuple[LayerCache, jax.Array]:
     inputs_normalized = self.pre_attention_norm(x)
     cache, attn_output = self.attn(
         inputs_normalized,

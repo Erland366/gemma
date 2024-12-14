@@ -59,7 +59,7 @@ class TransformerConfig:
   num_heads: int
   head_dim: int
   num_kv_heads: int
-  final_logit_softcap: float | None
+  final_logit_softcap: float
   use_post_attn_norm: bool
   use_post_ffw_norm: bool
   attention_types: Iterable[modules.AttentionType]
@@ -67,19 +67,18 @@ class TransformerConfig:
   query_pre_attn_norm: QueryPreAttentionNormalisation = (
       QueryPreAttentionNormalisation.BY_ONE_OVER_SQRT_HEAD_DIM
   )
-  attn_logits_soft_cap: float | None = None
-  sliding_window_size: int | None = None
+  attn_logits_soft_cap: float = None
+  sliding_window_size: int = None
   transpose_gating_einsum: bool = False
 
   def query_pre_attn_scalar(self) -> float:
     """Returns the scalar to multiply the query by before attention."""
-    match self.query_pre_attn_norm:
-      case QueryPreAttentionNormalisation.BY_EMBED_DIM_DIV_NUM_HEADS:
+    if self.query_pre_attn_norm == QueryPreAttentionNormalisation.BY_EMBED_DIM_DIV_NUM_HEADS:
         return self.embed_dim // self.num_heads
-      case QueryPreAttentionNormalisation.BY_ONE_OVER_SQRT_EMBED_DIM_DIV_NUM_HEADS:  # pylint: disable=line-too-long
-        return (self.embed_dim // self.num_heads)**-0.5
-      case QueryPreAttentionNormalisation.BY_ONE_OVER_SQRT_HEAD_DIM | _:
-        return self.head_dim**-0.5
+    elif self.query_pre_attn_norm == QueryPreAttentionNormalisation.BY_ONE_OVER_SQRT_EMBED_DIM_DIV_NUM_HEADS:
+        return (self.embed_dim // self.num_heads) ** -0.5
+    else:  # Handles QueryPreAttentionNormalisation.BY_ONE_OVER_SQRT_HEAD_DIM and other cases
+        return self.head_dim ** -0.5
 
   @classmethod
   def from_params(
@@ -279,9 +278,9 @@ class Transformer(nn.Module):
       self,
       last_tokens: jax.Array,  # [B, L]
       positions: jax.Array,  # [B, L]
-      cache: Cache | None,  # (sequence length L')
+      cache: Cache,
       attention_mask: jax.Array,  # [B, L, L']
-  ) -> tuple[jax.Array, Cache | None]:
+  ) -> tuple[jax.Array, Cache]:
     """Transformer forward pass.
 
     You can run this forward pass two ways: with or without an attention kv
